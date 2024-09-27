@@ -70,6 +70,13 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['email', 'first_name', 'last_name','phone_no', 'profile_pic']
 
+class GetOrganiserSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = Organiser
+        fields = '__all__'
+        depth = 1
+
 class GetProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     class Meta:

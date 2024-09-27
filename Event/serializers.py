@@ -38,11 +38,10 @@ class EventSerializer(serializers.ModelSerializer):
             event_type=event_type,
             description=description,
             date=date,
-            image=image,
             start_time=start_time,
             end_time=end_time,
             venue=venue,
-            organiser=organiser,  # Set the organiser to the logged-in user
+            organiser=organiser, 
             budget=budget,
             no_of_guests=no_of_guests,
             image=image,
@@ -51,7 +50,7 @@ class EventSerializer(serializers.ModelSerializer):
         return event
 
 class GetEventSerializer(serializers.ModelSerializer):
-    organiser = UserSerializer()
+    organiser = GetOrganiserSerializer()
     class Meta:
         model = Event
         fields = '__all__'
@@ -83,3 +82,9 @@ class CollegeFestDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CollegeFestDetails
         fields = ['event','fest_name', 'college_name', 'theme']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['title', 'notification_type', 'status', 'from_who', 'recipient']
+        read_only_fields = ['from_who']

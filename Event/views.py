@@ -94,11 +94,10 @@ def get_events(request):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def send_notification(request):
     data = request.data
-    organizer_id = request.user.id  # Assuming the logged-in user is an organizer
-
-    # Check if the organizer exists
+    organizer_id = request.user.id
     try:
         organizer = Organiser.objects.get(user=organizer_id)
     except Organiser.DoesNotExist:
@@ -111,18 +110,12 @@ def send_notification(request):
         except Staff.DoesNotExist:
             return Response({'error': f'Staff with ID {recipient_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
-        notification_data = {
-            'title': data.get('title', ''),
-            'notification_type': data.get('notification_type', 'normal'),
-            'status': data.get('status', None),
-            'from_who': organizer,
-            'recipient': recipient,
-        }
-        serializer = NotificationSerializer(data=notification_data)
-        if serializer.is_valid():
-            notification = serializer.save()
-            notifications.append(notification)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        Notification.objects.create(
+            title=data.get('title', ''),
+            notification_type=data.get('notification_type', 'normal'),
+            status=data.get('status', None),
+            from_who=organizer,
+            recipient=recipient,
+        )
 
-    return Response({'message': 'Notifications sent successfully.', 'notifications': [n.id for n in notifications]}, status=status.HTTP_201_CREATED)
+    return Response({'message': 'Notifications sent successfully.'}, status=status.HTTP_201_CREATED)
