@@ -5,6 +5,7 @@ from rest_framework import status
 from .models import *
 from .serializers import *
 from Chat.models import ChatRoom
+from Authentication.serializers import GetAllStaffSerializer
 from django.db.models import Q
 
 @api_view(['POST'])
@@ -155,6 +156,7 @@ def create_task(request):
         status=data.get('status', 'new')  # Default is 'new'
     )
 
+
     # Serialize the created task
     serializer = TaskSerializer(task)
     return Response({'message': 'Task created successfully.', 'data': serializer.data}, status=status.HTTP_201_CREATED)
@@ -168,6 +170,16 @@ def get_all_tasks(request):
         eve = Event.objects.get(id=request.GET.get('event_id'))
         tasks = Tasks.objects.filter(Q(assigned_by=org) & Q(event_id=eve))
         serializers = TaskSerializer(tasks, many=True)
+        return Response(serializers.data, status=status.HTTP_201_CREATED)
+    except Exception as e :
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_all_staff(request):
+    try:
+        staff = Staff.objects.all()
+        serializers = GetAllStaffSerializer(staff, many=True)
         return Response(serializers.data, status=status.HTTP_201_CREATED)
     except Exception as e :
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

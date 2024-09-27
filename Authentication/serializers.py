@@ -90,3 +90,10 @@ class GetStaffSerializer(serializers.ModelSerializer):
         model = Organiser
         fields = '__all__'
         depth = 1
+
+class GetAllStaffSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = Staff
+        fields = '__all__'
+        depth = 1
