@@ -34,6 +34,7 @@ INSTALLED_APPS = [
 
     'Authentication',
     'Chat',
+    'Event',
 ]
 ASGI_APPLICATION = 'eventbuddy.asgi.application'
 

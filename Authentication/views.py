@@ -83,19 +83,19 @@ def login_view(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_profile_view(request):
-        try :
-            user = request.user
+    try :
+        user = request.user
+        try:
+            userprofile = Organiser.objects.get(user=user)
+        except Organiser.DoesNotExist:
             try:
-                userprofile = Organiser.objects.get(user=user)
-            except Organiser.DoesNotExist:
-                try:
-                    userprofile = Staff.objects.get(user=user)
-                except Staff.DoesNotExist:
-                    return Response({'message': 'User Profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
-            
-            serializer = GetProfileSerializer(userprofile)
-            return Response(serializer.data,status=status.HTTP_200_OK)
-        except Organiser.DoesNotExist :
-            return Response('No Profile Found', status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                userprofile = Staff.objects.get(user=user)
+            except Staff.DoesNotExist:
+                return Response({'message': 'User Profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = GetProfileSerializer(userprofile)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    except Organiser.DoesNotExist :
+        return Response('No Profile Found', status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

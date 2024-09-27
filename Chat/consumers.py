@@ -57,7 +57,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'chat_message',
                 'message': message,
-                'sender': sender_email  # Changed to email or username
+                'sender': sender_email,
+                'name': sender.first_name
             }
         )
 
