@@ -12,6 +12,7 @@ class EventSerializer(serializers.ModelSerializer):
             'date', 
             'start_time', 
             'venue', 
+            'image',
             'organiser', 
             'budget', 
             'no_of_guests', 
@@ -21,6 +22,7 @@ class EventSerializer(serializers.ModelSerializer):
         event_type = validated_data.get('event_type')
         description = validated_data.get('description')
         date = validated_data.get('date')
+        image = validated_data.get('image')
         start_time = validated_data.get('start_time')
         end_time = validated_data.get('end_time')
         venue = validated_data.get('venue')
@@ -36,6 +38,7 @@ class EventSerializer(serializers.ModelSerializer):
             event_type=event_type,
             description=description,
             date=date,
+            image=image,
             start_time=start_time,
             end_time=end_time,
             venue=venue,
