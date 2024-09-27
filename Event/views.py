@@ -103,24 +103,19 @@ def send_notification(request):
     organizer_id = request.user
     recipient = request.data.get('recipient')
     reci = User.objects.get(id=recipient)
-    print(reci)
-    # Step 1: Check if the organizer exists
     try:
         organizer = User.objects.get(id=organizer_id.id)
         print(organizer)
     except Organiser.DoesNotExist:
         return Response({'error': 'Organizer not found.'}, status=status.HTTP_404_NOT_FOUND)
-    try:
-        Notification.objects.create(
-            title=data.get('title', ''),
-            notification_type=data.get('notification_type', 'normal'),
-            status=data.get('status', None),
-            from_who=organizer,
-            recipient=reci
-        )
-        return Response({'message': 'Notifications sent successfully.'}, status=status.HTTP_201_CREATED)
-    except Exception as e:
-        return Response({'error': f"Failed to create notification for recipient "}, status=status.HTTP_400_BAD_REQUEST)
+    Notification.objects.create(
+        title=data.get('title', ''),
+        notification_type=data.get('notification_type', 'normal'),
+        status=data.get('status', None),
+        from_who=organizer,
+        recipient=reci
+    )
+    return Response({'error': f"Failed to create notification for recipient "}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -155,8 +150,14 @@ def create_task(request):
         priority=data.get('priority', 'medium'),  # Default is 'medium'
         status=data.get('status', 'new')  # Default is 'new'
     )
-
-
+    title = f'{organiser.user.first_name} {organiser.user.last_name} assigned you a new task. Click to check out'
+    Notification.objects.create(
+        title=title,
+        notification_type=data.get('notification_type', 'normal'),
+        status=data.get('status', None),
+        from_who=user,
+        recipient=su
+    )
     # Serialize the created task
     serializer = TaskSerializer(task)
     return Response({'message': 'Task created successfully.', 'data': serializer.data}, status=status.HTTP_201_CREATED)
@@ -180,6 +181,17 @@ def get_all_staff(request):
     try:
         staff = Staff.objects.all()
         serializers = GetAllStaffSerializer(staff, many=True)
+        return Response(serializers.data, status=status.HTTP_201_CREATED)
+    except Exception as e :
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_notifications(request):
+    try:
+        user = request.user
+        notifications = Notification.objects.filter(recipient=user)
+        serializers = GetNotificationSerializer(notifications, many=True)
         return Response(serializers.data, status=status.HTTP_201_CREATED)
     except Exception as e :
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

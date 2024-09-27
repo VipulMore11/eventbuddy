@@ -89,6 +89,11 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = ['title', 'notification_type', 'status', 'from_who', 'recipient']
         read_only_fields = ['from_who']
     
+class GetNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
+
 class TaskSerializer(serializers.ModelSerializer):
     assigned_by = GetOrganiserSerializer()
     assigned_to = GetStaffSerializer()

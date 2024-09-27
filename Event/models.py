@@ -70,7 +70,7 @@ class Notification(models.Model):
     )
     
     title = models.CharField(max_length=255)
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='normal')
     is_seen = models.BooleanField(default=False)
     status = models.CharField(max_length=20, null=True, blank=True) 
     from_who = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
