@@ -5,6 +5,7 @@ from rest_framework import status
 from .models import *
 from .serializers import *
 from Chat.models import ChatRoom
+from django.db.models import Q
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -83,7 +84,8 @@ def get_events(request):
         user = request.user
         ev_id = request.GET.get('id')
         if ev_id is None:
-            events = Event.objects.filter(organiser=user)
+            org = Organiser.objects.get(user=user)
+            events = Event.objects.filter(organiser=org)
             serializer = GetEventSerializer(events, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else :
@@ -92,30 +94,80 @@ def get_events(request):
             return Response(serializer.data, status=status.HTTP_200_OK)
     except Exception as e :
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+    
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def send_notification(request):
     data = request.data
-    organizer_id = request.user.id
+    organizer_id = request.user
+    recipient = request.data.get('recipient')
+    reci = User.objects.get(id=recipient)
+    print(reci)
+    # Step 1: Check if the organizer exists
     try:
-        organizer = Organiser.objects.get(user=organizer_id)
+        organizer = User.objects.get(id=organizer_id.id)
+        print(organizer)
     except Organiser.DoesNotExist:
         return Response({'error': 'Organizer not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    notifications = []
-    for recipient_id in data.get('recipients', []):
-        try:
-            recipient = Staff.objects.get(id=recipient_id)
-        except Staff.DoesNotExist:
-            return Response({'error': f'Staff with ID {recipient_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
-
+    try:
         Notification.objects.create(
             title=data.get('title', ''),
             notification_type=data.get('notification_type', 'normal'),
             status=data.get('status', None),
             from_who=organizer,
-            recipient=recipient,
+            recipient=reci
         )
+        return Response({'message': 'Notifications sent successfully.'}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({'error': f"Failed to create notification for recipient "}, status=status.HTTP_400_BAD_REQUEST)
 
-    return Response({'message': 'Notifications sent successfully.'}, status=status.HTTP_201_CREATED)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_task(request):
+    user = request.user
+    try:
+        organiser = Organiser.objects.get(user=user)
+    except Organiser.DoesNotExist:
+        return Response({'error': 'Only organizers can create tasks.'}, status=status.HTTP_403_FORBIDDEN)
+    
+
+    data = request.data
+    try:
+        eve = Event.objects.get(id=data.get('event', ''),)
+    except Event.DoesNotExist:
+        return Response({'error': 'Event not found.'}, status=status.HTTP_403_FORBIDDEN)
+    try:
+        su = User.objects.get(id=data.get('assigned_to'))
+        assigned_to = Staff.objects.get(user=su)
+    except Staff.DoesNotExist:
+        return Response({'error': 'Assigned staff member not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Create the task
+    task = Tasks.objects.create(
+        title=data.get('title', ''),
+        description=data.get('description', ''),
+        event=eve,
+        assigned_by=organiser,
+        assigned_to=assigned_to,
+        start_date=data.get('start_date', ''),
+        end_date=data.get('end_date', ''),
+        priority=data.get('priority', 'medium'),  # Default is 'medium'
+        status=data.get('status', 'new')  # Default is 'new'
+    )
+
+    # Serialize the created task
+    serializer = TaskSerializer(task)
+    return Response({'message': 'Task created successfully.', 'data': serializer.data}, status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_tasks(request):
+    try:
+        user = request.user
+        org = Organiser.objects.get(user=user)
+        eve = Event.objects.get(id=request.GET.get('event_id'))
+        tasks = Tasks.objects.filter(Q(assigned_by=org) & Q(event_id=eve))
+        serializers = TaskSerializer(tasks, many=True)
+        return Response(serializers.data, status=status.HTTP_201_CREATED)
+    except Exception as e :
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

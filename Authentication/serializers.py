@@ -84,3 +84,9 @@ class GetProfileSerializer(serializers.ModelSerializer):
         fields= '__all__'
         depth=1
         
+class GetStaffSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = Organiser
+        fields = '__all__'
+        depth = 1

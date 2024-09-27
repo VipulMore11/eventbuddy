@@ -73,9 +73,35 @@ class Notification(models.Model):
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
     is_seen = models.BooleanField(default=False)
     status = models.CharField(max_length=20, null=True, blank=True) 
-    from_who = models.ForeignKey(Organiser, on_delete=models.CASCADE)
-    recipient = models.ForeignKey(Staff, on_delete=models.CASCADE)  
+    from_who = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_notifications')  
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.title} - {self.notification_type} - {'Seen' if self.is_seen else 'Unseen'}"
+    
+class Tasks(models.Model):
+    PRIORITY_CHOICES = (
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+    )
+    
+    STATUS_CHOICES = (
+        ('new', 'New'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+    )
+
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.CharField(max_length=255, null=True, blank=True)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, blank=True, null=True)
+    assigned_by = models.ForeignKey(Organiser, on_delete=models.CASCADE, blank=True, null=True)
+    assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, blank=True, null=True)
+    start_date = models.CharField(max_length=255, null=True, blank=True)
+    end_date = models.CharField(max_length=255, null=True, blank=True)
+    priority = models.CharField(max_length=255, choices=PRIORITY_CHOICES, default='medium')
+    status = models.CharField(max_length=255, choices=STATUS_CHOICES, default='new')
+
+    def __str__(self):
+        return f"{self.title}"
