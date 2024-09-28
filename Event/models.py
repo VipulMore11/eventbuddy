@@ -43,7 +43,7 @@ class BirthdayDetails(models.Model):
     age = models.PositiveIntegerField()
 
     def __str__(self):
-        return f"Birthday of {self.birthday_person}"
+        return f"Birthday of {self.bd_person}"
 
 class CorporateDetails(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, blank=True,null=True)
@@ -81,6 +81,28 @@ class Notification(models.Model):
     def __str__(self):
         return f"{self.title} - {self.notification_type} - {'Seen' if self.is_seen else 'Unseen'}"
     
+class Vendor(models.Model):
+    VENDOR_TYPES = [
+        ('caterer', 'Caterer'),
+        ('florist', 'Florist'),
+        ('dj', 'DJ'),
+        ('photographer', 'Photographer'),
+        ('decorator', 'Decorator'),
+        ('other', 'Other')
+    ]
+
+    name = models.CharField(max_length=255)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    rating = models.IntegerField(default=0, blank=True, null=True)
+    image = models.TextField(null=True, blank=True)
+    vendor_type = models.CharField(max_length=50, choices=VENDOR_TYPES)
+    budget = models.IntegerField(null=True, blank=True, default=0)
+    brand = models.CharField(max_length=255, blank=True, null=True)
+    contact = models.CharField(max_length=15, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.vendor_type}"
+    
 class Tasks(models.Model):
     PRIORITY_CHOICES = (
         ('high', 'High'),
@@ -99,10 +121,14 @@ class Tasks(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, blank=True, null=True)
     assigned_by = models.ForeignKey(Organiser, on_delete=models.CASCADE, blank=True, null=True)
     assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, blank=True, null=True)
+    actual_bg = models.IntegerField(default=0, blank=True, null=True)
+    expected_bg = models.IntegerField(default=0, blank=True, null=True)
     start_date = models.CharField(max_length=255, null=True, blank=True)
     end_date = models.CharField(max_length=255, null=True, blank=True)
     priority = models.CharField(max_length=255, choices=PRIORITY_CHOICES, default='medium')
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default='new')
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"{self.title}"
+    

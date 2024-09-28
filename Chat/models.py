@@ -8,6 +8,7 @@ class ChatRoom(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+    
 
 class Message(models.Model):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')

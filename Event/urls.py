@@ -12,4 +12,6 @@ urlpatterns = [
     path('get_all_notifications/', views.get_notifications, name='get_notifications'),
     path('is_seen/', views.is_seen, name='is_seen'),
     path('staff_task/', views.staff_task, name='staff_task'),
+    path('get_statistics/', views.get_statistics, name='get_statistics'),
+    path('get_all_vendors/', views.get_all_vendors, name='get_all_vendors'),
 ]

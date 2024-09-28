@@ -143,6 +143,7 @@ def create_task(request):
     task = Tasks.objects.create(
         title=data.get('title', ''),
         description=data.get('description', ''),
+        expected_bg=data.get('expected_bg', ''),
         event=eve,
         assigned_by=organiser,
         assigned_to=assigned_to,
@@ -171,7 +172,7 @@ def get_all_tasks(request):
         org = Organiser.objects.get(user=user)
         eve = Event.objects.get(id=request.GET.get('event_id'))
         tasks = Tasks.objects.filter(Q(assigned_by=org) & Q(event_id=eve))
-        serializers = TaskSerializer(tasks, many=True)
+        serializers = GetTaskSerializer(tasks, many=True)
         return Response(serializers.data, status=status.HTTP_201_CREATED)
     except Exception as e :
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -237,10 +238,70 @@ def staff_task(request):
         task = Tasks.objects.get(id=task_id, assigned_to=staff_member)
     except Tasks.DoesNotExist:
         return Response({'error': 'Task not found or you do not have permission to update this task.'}, status=status.HTTP_404_NOT_FOUND)
-
+    vendor_id = request.data.get('vendor_id')
+    if vendor_id is not None:
+        try:
+            vendor = Vendor.objects.get(id=vendor_id)
+            # print("Current Actual Background before update:", task.actual_bg)
+            # print("Vendor Budget:", vendor.budget)
+            task.vendor = vendor
+            task.actual_bg = vendor.budget  
+            # print(task.actual_bg)
+        except Vendor.DoesNotExist:
+            return Response({'error': 'Vendor not found.'}, status=status.HTTP_404_NOT_FOUND)
     serializer = TaskSerializer(instance=task, data=request.data, partial=True)  
     if serializer.is_valid():
         serializer.save() 
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_statistics(request):
+    try:
+        user = request.user
+        org = Organiser.objects.get(user=user)
+        
+        # Get all tasks assigned by the organizer
+        tasks = Tasks.objects.filter(assigned_by=org)
+
+        # Calculate total expected budget and total actual budget
+        total_expected_budget = sum(task.expected_bg for task in tasks)
+        total_actual_budget = sum(task.actual_bg for task in tasks)
+
+        # Prepare a list of individual tasks with their budgets
+        task_details = [
+            {
+                'task_id': task.id,
+                'title': task.title,
+                'expected_budget': task.expected_bg,
+                'actual_budget': task.actual_bg
+            }
+            for task in tasks
+        ]
+
+        # Prepare the response data
+        response_data = {
+            'total_expected_budget': total_expected_budget,
+            'total_actual_budget': total_actual_budget,
+            'task_count': tasks.count(),
+            'task_details': task_details  # Include individual task budgets
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+    except Organiser.DoesNotExist:
+        return Response({'error': 'Organizer not found.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])  # Remove if you don't want authentication
+def get_all_vendors(request):
+    try:
+        vendors = Vendor.objects.all()
+        serializer = VendorSerializer(vendors, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
