@@ -137,8 +137,9 @@ def create_task(request):
         assigned_to = Staff.objects.get(user=su)
     except Staff.DoesNotExist:
         return Response({'error': 'Assigned staff member not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    # Create the task
+    chatrooms = ChatRoom.objects.get(name=eve.title)
+    chatrooms.participants.add(su)
+    chatrooms.save()
     task = Tasks.objects.create(
         title=data.get('title', ''),
         description=data.get('description', ''),
@@ -176,6 +177,19 @@ def get_all_tasks(request):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_staff_tasks(request):
+    try:
+        user = request.user
+        staff = Staff.objects.get(user=user)
+        # eve = Event.objects.get(id=request.GET.get('event_id'))
+        tasks = Tasks.objects.filter(assigned_to=staff)
+        serializers = GetTaskSerializer(tasks, many=True)
+        return Response(serializers.data, status=status.HTTP_201_CREATED)
+    except Exception as e :
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
 @permission_classes([AllowAny])
 def get_all_staff(request):
     try:
@@ -195,3 +209,38 @@ def get_notifications(request):
         return Response(serializers.data, status=status.HTTP_201_CREATED)
     except Exception as e :
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def is_seen(request):
+    user = request.user
+    noti_id = request.data.get('id')
+    noti = Notification.objects.get(id=noti_id)
+    noti.is_seen = True
+    noti.save()
+    return Response({'message': "Status Changed"}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def staff_task(request):
+    user = request.user
+    try:
+        staff_member = Staff.objects.get(user=user)
+    except Staff.DoesNotExist:
+        return Response({'error': 'Staff member not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    task_id = request.data.get('task_id')
+    if not task_id:
+        return Response({'error': 'Task ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        task = Tasks.objects.get(id=task_id, assigned_to=staff_member)
+    except Tasks.DoesNotExist:
+        return Response({'error': 'Task not found or you do not have permission to update this task.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = TaskSerializer(instance=task, data=request.data, partial=True)  
+    if serializer.is_valid():
+        serializer.save() 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

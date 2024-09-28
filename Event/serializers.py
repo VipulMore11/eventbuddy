@@ -101,3 +101,11 @@ class TaskSerializer(serializers.ModelSerializer):
         model = Tasks
         fields = ['id', 'title','event', 'description', 'assigned_by', 'assigned_to', 
                   'start_date', 'end_date', 'priority', 'status']
+        
+class GetTaskSerializer(serializers.ModelSerializer):
+    assigned_by = GetOrganiserSerializer()
+    assigned_to = GetStaffSerializer()
+    class Meta:
+        model = Tasks
+        fields = '__all__'
+        depth = 1
