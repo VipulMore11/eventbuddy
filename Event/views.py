@@ -262,9 +262,17 @@ def get_statistics(request):
     try:
         user = request.user
         org = Organiser.objects.get(user=user)
-        
-        # Get all tasks assigned by the organizer
-        tasks = Tasks.objects.filter(assigned_by=org)
+        event_id = request.GET.get('event_id')
+        if not event_id:
+            return Response({'error': 'Event ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            event = Event.objects.get(id=event_id, organiser=org)
+        except Event.DoesNotExist:
+            return Response({'error': 'Event not found or does not belong to this organiser.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get all tasks assigned by the organizer for the specific event
+        tasks = Tasks.objects.filter(assigned_by=org, event=event)
 
         # Calculate total expected budget and total actual budget
         total_expected_budget = sum(task.expected_bg for task in tasks)
@@ -290,7 +298,7 @@ def get_statistics(request):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
-    
+
     except Organiser.DoesNotExist:
         return Response({'error': 'Organizer not found.'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
