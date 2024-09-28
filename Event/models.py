@@ -7,6 +7,7 @@ EVENT_TYPES = [
         ('conference', 'Conference'),
         ('fest', 'College Fest'),
         ('corporate', 'Corporate Event'),
+        ('custom', 'Custom'),
     ]
 
 class Event(models.Model):

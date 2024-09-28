@@ -19,7 +19,7 @@ def create_event(request):
     event_data['start_time'] = event_data.get('start_time', '')
     event_data['end_time'] = event_data.get('end_time', '')
     event_data['venue'] = event_data.get('venue', '')
-    event_data['organizer'] = request.user.id  # Assuming the organizer is the logged-in user
+    event_data['organiser'] = request.user.id  # Assuming the organizer is the logged-in user
     event_data['budget'] = event_data.get('budget', '')
     event_data['no_of_guests'] = event_data.get('no_of_guests', 0)
     event_data['image'] = event_data.get('image', '')
