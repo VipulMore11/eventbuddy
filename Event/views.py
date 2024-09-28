@@ -297,11 +297,17 @@ def get_statistics(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # Remove if you don't want authentication
+@permission_classes([AllowAny])  # Remove if you don't want authentication
 def get_all_vendors(request):
     try:
-        vendors = Vendor.objects.all()
-        serializer = VendorSerializer(vendors, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        vendor_id = request.GET.get('vendor_id')
+        if vendor_id:
+            vendors = Vendor.objects.get(id=vendor_id)
+            serializer = VendorSerializer(vendors)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            vendors = Vendor.objects.all()
+            serializer = VendorSerializer(vendors, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
